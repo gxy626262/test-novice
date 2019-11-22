@@ -3,4 +3,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost/test2
+      uri: mongodb://localhost:37017/test2
+file:
+  temp:
+    dir: /tmp

@@ -3,6 +3,7 @@ package com.novice.project.test.novice.web;
 import com.novice.framework.core.enums.EventType;
 import com.novice.framework.datamodel.definition.Entity;
 import com.novice.framework.datamodel.manager.EntityManager;
+import com.novice.framework.toolkit.file.service.StorageService;
 import com.novice.project.test.novice.TableType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 
@@ -19,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class TestController {
 	private final EntityManager entityManager;
+	private final StorageService storageService;
 
 	@GetMapping("/create")
 	public String create() {
@@ -38,5 +41,12 @@ public class TestController {
 		var e = entityManager.get(id, tableId);
 		System.out.println(e.getProperties().get("name"));
 		return e;
+	}
+
+	@GetMapping("/file")
+	public com.novice.framework.toolkit.file.File file() {
+		File file = new File("/data/test.png");
+		com.novice.framework.toolkit.file.File file1 = this.storageService.importFile(file);
+		return file1;
 	}
 }

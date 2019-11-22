@@ -1,12 +1,12 @@
 package com.novice.project.test.novice;
 
-import com.novice.framework.toolkit.i18n.I18n;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+import com.novice.framework.core.annotation.Module;
+import com.novice.framework.datamodel.annotation.MetaScan;
 
-@SpringBootConfiguration
-@ComponentScan("com.novice.project.test")
-@I18n("i18n/messages")
+import static com.novice.project.test.novice.ProjectConfig.NAME;
+
+@MetaScan
+@Module(name = NAME, i18n = "i18n/test/messages")
 public class ProjectConfig {
-
+	public static final String NAME = "test";
 }
