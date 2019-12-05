@@ -1,4 +1,4 @@
-package com.novice.project.test.novice.definition;
+package com.novice.project.test.definition;
 
 
 import com.novice.framework.datamodel.annotation.Module;
