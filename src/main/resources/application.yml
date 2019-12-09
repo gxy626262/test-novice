@@ -4,6 +4,10 @@ spring:
   data:
     mongodb:
       uri: mongodb://106.15.237.213:27017/test
+  cache:
+    type: ehcache
+    ehcache:
+      config: classpath:/default-ehcache.xml
 file:
   temp:
     dir: /tmp

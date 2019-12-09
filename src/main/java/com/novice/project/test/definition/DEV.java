@@ -2,7 +2,7 @@ package com.novice.project.test.definition;
 
 
 import com.novice.framework.datamodel.annotation.Module;
-import com.novice.framework.datamodel.definition.Meta;
+import com.novice.framework.datamodel.meta.Meta;
 
 @Module(id = DEV.ID, displayAs = "测试模块")
 public abstract class DEV implements Meta {

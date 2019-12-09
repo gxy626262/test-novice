@@ -4,7 +4,9 @@ package com.novice.project.test.definition;
 import com.novice.framework.datamodel.annotation.Field;
 import com.novice.framework.datamodel.annotation.Type;
 import com.novice.framework.datamodel.datatype.Image;
-import com.novice.framework.datamodel.definition.Meta;
+import com.novice.framework.datamodel.meta.Meta;
+
+import java.util.Date;
 
 @Type(id = Test.ID, displayAs = "测试类型", module = DEV.class)
 public abstract class Test implements Meta {
@@ -25,5 +27,8 @@ public abstract class Test implements Meta {
 
 	@Field(displayAs = "头像", dataType = Image.ID)
 	private String avatar;
+
+	@Field(displayAs = "日期")
+	private Date date;
 
 }
