@@ -6,6 +6,7 @@ import com.novice.framework.usersystem.security.CustomResponseAuthenticationSucc
 import com.novice.framework.usersystem.security.UserLogoutSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -18,8 +19,10 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -62,14 +65,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthenticationSuccessHandler authenticationSuccessHandler() {
 		CustomResponseAuthenticationSuccessHandler successHandler = new CustomResponseAuthenticationSuccessHandler();
 		successHandler.setAlwaysUseDefaultTargetUrl(true);
-		successHandler.setDefaultTargetUrl("/loginPage?$=success");
+		successHandler.setDefaultTargetUrl("/login.html?$=success");
 		return successHandler;
 	}
 
 	@Bean(name = "us.authenticationFailureHandler")
 	public AuthenticationFailureHandler authenticationFailureHandler() {
 		CustomResponseAuthenticationFailureHandler failureHandler = new CustomResponseAuthenticationFailureHandler();
-		failureHandler.setDefaultFailureUrl("/loginPage?$=deny");
+		failureHandler.setDefaultFailureUrl("/login.html?$=deny");
 		return failureHandler;
 	}
 
@@ -108,15 +111,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public UsernamePasswordAuthenticationFilter verificationCodeAuthenticationProcessingFilter() {
-		var verificationCodeAuthenticationProcessingFilter = new UsernamePasswordAuthenticationFilter();
-		verificationCodeAuthenticationProcessingFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/login", "POST"));
-		verificationCodeAuthenticationProcessingFilter.setAuthenticationSuccessHandler(this.authenticationSuccessHandler());
-		verificationCodeAuthenticationProcessingFilter.setAuthenticationFailureHandler(this.authenticationFailureHandler());
-		verificationCodeAuthenticationProcessingFilter.setAuthenticationManager(this.authenticationManager());
-		verificationCodeAuthenticationProcessingFilter.setSessionAuthenticationStrategy(this.sessionAuthenticationStrategy());
-		verificationCodeAuthenticationProcessingFilter.setRememberMeServices(this.rememberMeServices());
-		return verificationCodeAuthenticationProcessingFilter;
+	public UsernamePasswordAuthenticationFilter usernamePasswordAuthenticationFilter() {
+		var usernamePasswordAuthenticationFilter = new UsernamePasswordAuthenticationFilter();
+		usernamePasswordAuthenticationFilter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/login", "POST"));
+		usernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(this.authenticationSuccessHandler());
+		usernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(this.authenticationFailureHandler());
+		usernamePasswordAuthenticationFilter.setAuthenticationManager(this.authenticationManager());
+		usernamePasswordAuthenticationFilter.setSessionAuthenticationStrategy(this.sessionAuthenticationStrategy());
+		usernamePasswordAuthenticationFilter.setRememberMeServices(this.rememberMeServices());
+		return usernamePasswordAuthenticationFilter;
 	}
 
 	@Bean(name = "us.daoAuthenticationProvider")
@@ -133,6 +136,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new RememberMeAuthenticationProvider(REMEMBER_ME_KEY);
 	}
 
+	@Bean
+	public AuthenticationEntryPoint api401StatusEntryPoint() {
+		return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+	}
+
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(this.userDetailsService).passwordEncoder(this.passwordEncoder);
@@ -142,23 +150,40 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.addFilter(this.concurrentSessionFilter());
 		http.addFilter(this.sessionManagementFilter());
+		http.addFilterAt(this.usernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 		http.csrf().disable()
 				.authorizeRequests()
 				.antMatchers("/js/**").permitAll()
 				.antMatchers("/images/**").permitAll()
 				.antMatchers("/favicon.ico").permitAll()
 				.antMatchers("/css/**").permitAll()
-				.antMatchers("/loginPage**").permitAll()
+				.antMatchers("/login.html").permitAll()
 				.antMatchers("/login").permitAll()
 				.antMatchers("/logout").permitAll()
 				.antMatchers("/novice/file/**").permitAll()
 				.antMatchers("/novice/i18n/**").permitAll()
+				.antMatchers("/novice/user/checkLogin").permitAll()
 				.antMatchers("/novice/menu/**").authenticated()
 				.antMatchers("/novice/metaLoader/**").authenticated()
 				.antMatchers("/novice/**").authenticated()
 				.anyRequest().hasRole(Role.ADMIN_ROLE_ID)
+				.and()
+				.rememberMe().key(REMEMBER_ME_KEY).rememberMeServices(this.rememberMeServices())
 				.and().anonymous()
 				.and().formLogin()
-				.and().httpBasic();
+				.loginPage("/login.html").permitAll()
+				.and()
+				.logout()
+				.logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+				.invalidateHttpSession(true)
+				.logoutSuccessHandler(this.logoutSuccessHandler())
+				.deleteCookies("JSESSIONID")
+				.permitAll()
+				.and()
+				.anonymous()
+				.and()
+				.exceptionHandling()
+				.accessDeniedPage("/errors/403.html")
+				.defaultAuthenticationEntryPointFor(api401StatusEntryPoint(), new AntPathRequestMatcher("/**"));
 	}
 }
